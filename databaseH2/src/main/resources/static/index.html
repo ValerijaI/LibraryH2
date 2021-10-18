@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+    <body>
+
+        <h2>Library H2</h2>
+
+        <table id="bookList">
+
+        </table>
+
+        <form action="#">
+            <input id="book_author" placeholder="Book author">
+            <input id="book_title" placeholder="Book title">
+            <button onclick="saveBook()">Save book</button>
+        </form>
+
+        <form>
+            <input id="author_field" placeholder="Book author">
+            <input id="title_field" placeholder="Book title">
+            <input id="order_by" placeholder="Order by">
+            <input id="order_direction" placeholder="Order direction">
+            <input id="page_size" placeholder="Page size">
+            <input id="page_number" placeholder="Page number">
+            <button onclick="searchBooks()">Search books</button>
+        </form>
+
+        <script>
+            function loadBooks() {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var booksResponse = JSON.parse(this.responseText).bookList;
+                        var html = '<tr>\n' +
+                            '        <th>Book id</th>\n' +
+                            '        <th>Book author</th>\n' +
+                            '        <th>Book title</th>\n' +
+                            '        <th>Delete</th>\n' +
+                            '    </tr>';
+                        for (var i = 0; i < booksResponse.length; i++) {
+                            var book = booksResponse[i];
+                            console.log(book);
+                            html = html + '<tr><td>' + book.id + '</td>\n' +
+                                '        <td>' + book.author + '</td>\n' +
+                                '        <td>' + book.title + '</td>\n' +
+                                '        <td><button onclick="deleteBook(' + book.id + ')">Delete</button></td></tr>';
+
+                        }
+
+                        document.getElementById("bookList").innerHTML = html;
+                    }
+                };
+                xhttp.open("GET", "http://localhost:8080/book/getAll", true);
+                xhttp.send();
+            }
+
+            function deleteBook(bookId) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.open("DELETE", "http://localhost:8080/book/remove", true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                xhttp.send(JSON.stringify({id:bookId}));
+                loadBooks()
+            }
+
+            function saveBook() {
+                var bookAuthor = document.getElementById("book_author").value;
+                var bookTitle = document.getElementById("book_title").value;
+
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.open("POST", "http://localhost:8080/book/add");
+                xmlhttp.setRequestHeader("Content-Type", "application/json");
+                xmlhttp.send(JSON.stringify({author: bookAuthor, title: bookTitle}));
+
+                loadBooks();
+            }
+
+            function searchBooks() {
+                var inputAuthor = document.getElementById("author_field").value;
+                var inputTitle = document.getElementById("title_field").value;
+                var inputOrderBy = document.getElementById("order_by").value;
+                var inputOrderDirection = document.getElementById("order_direction").value;
+                var inputPageSize = document.getElementById("page_size").value;
+                var inputPageNumber = document.getElementById("page_number").value;
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var searchRequest = JSON.parse(this.responseText);
+                        var searchBookResponse = JSON.parse(this.responseText).bookList;
+                        var html = '<tr>\n' +
+                            '        <th>Book id</th>\n' +
+                            '        <th>Book author</th>\n' +
+                            '        <th>Book title</th>\n' +
+                            '        <th>Delete</th>\n' +
+                            '    </tr>';
+                        for (var i = 0; i < searchBookResponse.length; i++) {
+                            var book = searchBookResponse[i];
+                            console.log(book);
+                            html = html + '<tr><td>' + book.id + '</td>\n' +
+                                '        <td>' + book.author + '</td>\n' +
+                                '        <td>' + book.title + '</td>\n' +
+                                '        <td><button onclick="deleteBook(' + book.id + ')">Delete</button></td></tr>';
+
+                        }
+                        document.getElementById("bookList").innerHTML = html;
+                    }
+                }
+
+                xhttp.open("POST", "http://localhost:8080/book/search", true);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                xhttp.send(JSON.stringify({author: inputAuthor, title: inputTitle, ordering:{orderBy:inputOrderBy,direction:inputOrderDirection},paging:{pageNumber:inputPageNumber,pageSize:inputPageSize}}));
+            }
+
+        </script>
+    </body>
+</html>
